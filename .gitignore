@@ -9,3 +9,6 @@ artifacts/
 !docs/demo/demo.mp4
 data/
 release/
+/bench.json
+/bench.jso
+/soak.json
