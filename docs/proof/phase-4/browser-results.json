@@ -1,0 +1,72 @@
+{
+  "status": "PASS",
+  "results": [
+    {
+      "name": "ui-text-min-18px-normal",
+      "pass": true,
+      "screens": [
+        "menu",
+        "settings",
+        "leaderboard",
+        "intro",
+        "hud",
+        "result"
+      ]
+    },
+    {
+      "name": "ui-text-min-22.5px-large",
+      "pass": true,
+      "screens": [
+        "menu",
+        "settings",
+        "leaderboard",
+        "intro",
+        "hud",
+        "result"
+      ]
+    },
+    {
+      "name": "key-rebinding-conflict-persist-reset-effect",
+      "pass": true,
+      "conflict": "Phím E đã dùng cho \"Tương tác\". Hãy chọn phím khác."
+    },
+    {
+      "name": "reduced-motion-disables-screen-flash",
+      "pass": true,
+      "flashOff": 0.4977
+    },
+    {
+      "name": "captions-and-indicators",
+      "pass": true,
+      "shadeCaption": "Bóng Mực xuất hiện! Theo mũi tên để biết hướng.Bóng Mực xuất hiện! Theo mũi tên để biết hướng.",
+      "tenSec": "Còn 9 giây tới bình minh!Đèn L1 sắp cạn dầu (20/100)",
+      "wind": "Gió sắp thổi! Giữ vững bước chân.",
+      "arrows": 2
+    },
+    {
+      "name": "leaderboard-ui-disk-persistence-export",
+      "pass": true,
+      "rows": [
+        "1Anna14922/3 đêm2026-11-20",
+        "2Bach_20265971/3 đêm2026-11-20"
+      ],
+      "exported": [
+        [
+          "Anna",
+          1492,
+          2
+        ],
+        [
+          "Bach_2026",
+          597,
+          1
+        ]
+      ]
+    }
+  ],
+  "viewport": [
+    1280,
+    720
+  ],
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+}

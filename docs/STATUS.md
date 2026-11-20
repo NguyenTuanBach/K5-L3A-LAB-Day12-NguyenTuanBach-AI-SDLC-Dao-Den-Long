@@ -1,10 +1,8 @@
 # Project status
 
-2026-11-20: Phase1 and Phase2 tagged/pushed; Phase3 implemented and verified.
-Phase3 runtime c8c62cc, contract1.2; fuel/refuel/relight/drain/capacity/dawn/palette implemented.
-53/53 Windows/Linux tests PASS;12new+10retained CLIscenarios byte-identical;32browserchecks PASS.
-Normal game measured119FPS at1280x720; palette persisted after reload.
-[Report](proof/phase-3/report.md), [matrix](../specs/003-lantern-fuel/verification.md), ADR003 and CHANGELOG.
-Run npm ci, npm run build, npm start; http://localhost:4173.
-Do not start Phase4 until requested and its ticket read. Human game-feel acceptance pending; hidden tests unavailable.
-Token/cost not measured. Final video/Release1.0.0 belong to Phase4.
+2026-11-20: Phase 4 (Ticket-04 / contract 1.3) implemented and verified locally; runtime 9911063, verify run 20261120T111804Z-bf793b79 9/9 PASS.
+67/67 tests; bench 243 FPS avg / p1 36 / load 1.2 s on the dev machine (instructor thresholds not measured); soak 10 nights 0 crashes mem x1.09; browser checks for 18px text, rebinding, captions, reduced motion, leaderboard persistence/export; Docker Linux parity.
+Report: docs/proof/phase-4/report.md. Matrix: specs/004-dawn-release/verification.md. Retro: docs/notes/retro.md.
+Local tags phase-1..3 all point to commit 5b56962 (Phases 1-3 were committed together); phase-4 points to the Phase 4 proof commit. Nothing pushed yet.
+Open: push main + tags, Release v1.0.0 (web static zip + Docker instructions), final demo video showing tests/headless/bench, token/cost (not measured), macOS run (not run), hidden tests/instructor machine (unavailable).
+Earlier: the author-name/ID rename also changed text in historical proof paths of Phase 1-3 (paths are not real any more).

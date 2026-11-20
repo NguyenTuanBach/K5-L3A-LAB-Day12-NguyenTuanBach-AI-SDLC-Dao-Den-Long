@@ -1,0 +1,55 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 370B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 118B done
+#3 DONE 0.0s
+
+#4 [1/9] FROM docker.io/library/node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32
+#4 resolve docker.io/library/node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32 0.0s done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 5.02kB done
+#5 DONE 0.0s
+
+#6 [7/9] COPY tests ./tests
+#6 CACHED
+
+#7 [4/9] RUN npm ci --ignore-scripts
+#7 CACHED
+
+#8 [3/9] COPY package.json package-lock.json ./
+#8 CACHED
+
+#9 [5/9] COPY src ./src
+#9 CACHED
+
+#10 [8/9] COPY index.html game.contract.json ./
+#10 CACHED
+
+#11 [6/9] COPY scripts ./scripts
+#11 CACHED
+
+#12 [2/9] WORKDIR /game
+#12 CACHED
+
+#13 [9/9] RUN npm test && npm run build
+#13 CACHED
+
+#14 exporting to image
+#14 exporting layers done
+#14 exporting manifest sha256:ac309493aa6b7b0a0df62233e250a5ccffc788f6850dd4ca36939fa7d0735ece done
+#14 exporting config sha256:173173cfbb31d7d2248582fcfa51f1a7b9a00057cb7fb880da66546f03a7889d done
+#14 exporting attestation manifest sha256:87797eb5f9c76a4587fb3e9f9fbac8d6e6a0c200b19de0520dc5665c2565eff2 0.0s done
+#14 exporting manifest list sha256:688bfddc74b2cfe7dee6589717c27dd87444935f83266fb654ed6c7f92847e12
+#14 exporting manifest list sha256:688bfddc74b2cfe7dee6589717c27dd87444935f83266fb654ed6c7f92847e12 done
+#14 naming to docker.io/library/dao-den-long:phase-4 done
+#14 unpacking to docker.io/library/dao-den-long:phase-4 done
+#14 DONE 0.1s

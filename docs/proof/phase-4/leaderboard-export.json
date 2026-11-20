@@ -1,0 +1,18 @@
+{
+  "entries": [
+    {
+      "name": "Anna",
+      "score": 1492,
+      "nights_won": 2,
+      "achieved_at": "2026-11-20T18:18:47+07:00",
+      "seed": 42
+    },
+    {
+      "name": "Bach_2026",
+      "score": 597,
+      "nights_won": 1,
+      "achieved_at": "2026-11-20T18:18:46+07:00",
+      "seed": 42
+    }
+  ]
+}
