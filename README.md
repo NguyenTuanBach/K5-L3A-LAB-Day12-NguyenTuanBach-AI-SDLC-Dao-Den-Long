@@ -1,3 +1,110 @@
+# Đảo Đèn Lồng — Phase 3 · Đèn cạn dầu
+
+Game 3D góc nhìn thứ ba: dẫn Mây qua Đảo Bến, Đảo Cau và Đảo Chuông, thắp 18 ngọn đèn,
+tránh Bóng Mực và Gió Lạc. Cảnh/âm thanh procedural; bản web và CLI dùng chung core 60 Hz.
+
+[Báo cáo Phase 3](docs/proof/phase-3/report.md) · [Đặc tả](specs/003-lantern-fuel/spec.md) · [Verify](docs/VERIFICATION.md) · [Breaking changes](CHANGELOG.md)
+
+## Chạy game
+
+Yêu cầu Node.js >=22 và npm. Sau clone, từ thư mục repo chạy tối đa ba lệnh:
+
+```sh
+npm ci
+npm run build
+npm start
+```
+
+Mở **http://localhost:4173** trong browser desktop có WebGL2. Bản build dist/
+không cần mạng/CDN sau cài đặt; có thể phục vụ bằng static server bất kỳ.
+Windows đã thử Node 22.17.0; Linux đã thử bằng Docker. Nếu môi trường doanh nghiệp
+có CA riêng, dùng cấu hình CA hệ thống phù hợp, không tắt kiểm tra TLS.
+
+## Điều khiển và luật
+
+| Điều khiển | Hành động |
+|---|---|
+| WASD hoặc mũi tên | Di chuyển theo camera |
+| Kéo chuột trên cảnh | Xoay camera |
+| Space | Nhảy, cần nhả để nhảy tiếp |
+| E | Nạp/châm dầu đèn gần trong 2 m; lần đầu cần 10, thắp lại cần 5 |
+| Q | Tỏa sáng, tốn 3 đom đóm, cooldown 3 giây |
+| Shift | Lướt 14 m/s trong 0,2 giây, hồi 1,5 giây |
+| Esc/P hoặc nút Ⅱ | Tạm dừng/tiếp tục; chơi lại/cài đặt/về menu |
+
+Mây có 3 lửa, túi ban đầu 10; mỗi lần thắp thành công tăng 2, tối đa 20. Chạy 6 m/s; ba Đêm dài 240/270/300 giây.
+Bóng Mực đuổi 4 m/s (Đêm 3: 4,5), hit làm rơi nửa túi và miễn nhiễm 90 tick.
+Ra ngoài nền sẽ rơi; dưới Y=-10 mất một lửa và toàn bộ đom đóm, hồi sinh sau 60 tick.
+Đèn có 100 dầu, hao 1/giây; E dùng mỗi đom đóm châm 10 dầu. Đèn có ít nhất 30 dầu tạo vùng an toàn 6 m.
+Đèn yếu có thể bị Bóng Mực hút thêm 5 dầu/giây mỗi con. Hết dầu sẽ tắt; thắp lại cần 5 đom đóm.
+Pulse bán kính 3D 5 m, choáng 120 tick, đẩy 4 m trong 15 tick.
+Nhặt trong XZ ≤1 m và chênh cao ≤1,5 m. Đảo Cau có cầu/bục nhảy; Đảo Chuông có tầng/dốc/gió.
+Bùa Gió tăng chạy lên 7,2 m/s và bỏ hồi lướt trong 10 giây. Gió Lạc cướp tối đa 3 đom đóm;
+pulse khi nó mang đồ để thu hồi. Cài đặt âm lượng/độ nhạy chuột được lưu trên trình duyệt.
+
+Giữ ít nhất 3/5, 4/6, 5/7 đèn sáng ở bình minh để thắng từng Đêm; không còn thắng sớm.
+Hết lửa luôn thua trước. Tab ẩn tự pause. Cài đặt có “Bảng màu dễ phân biệt”, được lưu sau reload.
+Headless hỗ trợ pause: tick vẫn tăng, sim_tick/thời gian/tất cả timer đứng yên.
+
+### Điểm
+
++5 mỗi đom đóm nạp/châm dầu; +100 lần đầu thắp, +40 thắp lại; pulse +5/con hoặc +15/con đang hút dầu.
+Khi thắng: mỗi đèn đang sáng +50 + floor(dầu), mỗi lửa +50; bỏ thưởng thời gian. Scenario không cộng điểm.
+Nguồn cấu hình duy nhất: [game.contract.json](game.contract.json).
+
+## Test và headless
+
+```sh
+npm test
+npm run verify
+node src/headless/cli.mjs --seed 42 --night 1 --ticks 600 --out artifacts/run.jsonl
+node src/headless/cli.mjs --seed 42 --night 2 --scenario tests/scenarios/phase2/pad.json --ticks 90 --snapshot-every 1 --out artifacts/pad.jsonl
+```
+
+CLI ghi JSONL vào --out, snapshot mặc định mỗi 10 tick từ tick 0; input tick k tạo
+state/event k+1. Thành công exit 0; inputs/scenario sai định dạng exit 2 và stderr.
+Tất cả cờ/schema: [headless contract 1.2](specs/003-lantern-fuel/contracts/headless.md). --night nhận 1, 2, 3.
+
+`npm run verify` assert 12 scenario mới và 10 scenario hồi quy, chạy hai
+CLI so từng byte và đo 21.600 tick. Browser được kiểm tra riêng, gồm parity core/CLI.
+
+Toàn bộ Verify tự động, cần thêm Python >=3.10 và Docker Linux:
+
+```sh
+python scripts/verify.py --config verification/checks.json
+```
+
+Runner trả nonzero nếu test/build/scenario/Linux thất bại. Report có raw log và
+trạng thái; không thay thế việc review ảnh/camera/HUD. Xem [ma trận](specs/003-lantern-fuel/verification.md).
+
+## Docker Linux
+
+```sh
+docker build -t dao-den-long:phase-3 .
+docker run --rm -p 4173:4173 dao-den-long:phase-3
+```
+
+CLI: `docker run --rm -v "${PWD}/artifacts:/out" dao-den-long:phase-3 node src/headless/cli.mjs --seed 42 --night 2 --ticks 600 --out /out/run.jsonl`.
+Tạo thư mục artifacts trước khi bind mount nếu Docker yêu cầu. Base image pin digest trong Dockerfile.
+
+## Sáng tạo của tôi
+
+Đường đá và đom đóm dẫn ra năm hướng, đảo nổi giữa mây, ánh đèn ấm dần và lời kể
+ngắn cho Mây. Tất cả mesh tự sinh; trang trí không dùng RNG gameplay và không thêm
+thực thể vào output headless. [Ảnh bắt đầu](docs/proof/phase-1/intro.png) và
+[ảnh thắng](docs/proof/phase-1/won.png); replay/core tests chứng minh luật vẫn đúng.
+
+## Tài liệu và giới hạn
+
+[AGENTS](AGENTS.md), [ARCHITECTURE](ARCHITECTURE.md), [constitution](.specify/memory/constitution.md),
+[Spec Kit](docs/SPECKIT.md), [STATUS](docs/STATUS.md), [CREDITS](CREDITS.md), [LICENSE](LICENSE).
+Phase 2 có âm thanh và lưu cài đặt; chưa lưu tiến độ chiến dịch hoặc hỗ trợ touch/mobile.
+Video demo và Release v1.0.0 thuộc bàn giao cuối Phase 4.
+Số liệu/bản đồ theo Ticket-02; các điểm chưa đặc tả được ghi rõ trong spec/assumptions.
+
+<details>
+<summary>Hướng dẫn lab gốc (giữ để tham khảo)</summary>
+
 # Day 12 — AI SDLC: Đảo Đèn Lồng
 
 > **Cá nhân** (1 người / 1 MSSV) · Áp dụng SDLC cùng AI để xây một **game 3D** qua **4 phase**, từ yêu cầu ban đầu tới bản phát hành.
@@ -64,7 +171,7 @@ Mỗi phase là một vòng nhỏ. Công cụ, thứ tự, định dạng tài l
 
 ## Ba điều cần nhớ
 
-> Bạn được **tự do sáng tạo thêm** quanh phần lõi (nhân vật mới, kẻ địch mới, cơ chế nhỏ, câu chuyện, hiệu ứng, âm thanh…). Sáng tạo gọn và không phá yêu cầu được tính điểm trong hạng mục F của [RUBRIC](RUBRIC.md); ghi mục "Sáng tạo của tôi" trong README của bạn.
+> Bạn được **tự do sáng tạo thêm** quanh phần lõi (nhân vật, cơ chế nhỏ, câu chuyện, hiệu ứng, âm thanh…). Sáng tạo gọn và không phá yêu cầu được tính điểm trong hạng mục F của [RUBRIC](RUBRIC.md); ghi mục "Sáng tạo của tôi" trong README của bạn.
 
 - **Game tốt là game đúng yêu cầu của khách hàng**, không phải game phức tạp hay đẹp nhất. Làm đúng và chứng minh được là đúng trước, trau chuốt sau.
 - **Cân nhắc kỹ quota token của bạn.** Đốt nhiều token không làm bài tốt hơn. Ngữ cảnh gọn, kế hoạch rõ, kiểm chứng sớm thường vừa rẻ vừa đúng hơn chạy agent liên tục.
@@ -101,3 +208,5 @@ Không commit API key, token hay `.env`. Gửi link repo theo hướng dẫn c�
 - Dùng AI thoải mái; không sao chép repo của người khác.
 - Bằng chứng phải thật: test luôn đạt hay output sửa tay là vi phạm.
 - Nhân vật, bối cảnh là bản gốc của lab; asset bên ngoài chỉ dùng loại CC0/CC-BY/MIT hoặc tự tạo, ghi nguồn trong `CREDITS.md`.
+
+</details>
