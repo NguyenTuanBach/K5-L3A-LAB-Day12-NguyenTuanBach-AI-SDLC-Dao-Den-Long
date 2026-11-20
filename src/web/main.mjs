@@ -14,8 +14,8 @@ const canvas = $('world'); const keys = new Set();
 let g, tuning, scene, camera, renderer, playerMesh, ambient, sun;
 let mode = 'intro', yaw = 0, accumulator = 0, lastTime = 0, dragging = false;
 let pulseAge = 100, hitAge = 100, toastAge = 100, visualTime = 0, facing = 0;
-const lanternMeshes = new Map(), moteMeshes = new Map(), shadeMeshes = new Map();
-let pulseMesh, motesGroup, shadesGroup;
+const lanternMeshes = new Map();
+let pulseMesh;
 let currentNight=1, wonScores=[0,0,0], settingsReturn='menu', lastCountdown=-1;
 let settings={volume:.35,sensitivity:.3,colorblind:false,captions:true,reducedMotion:false,largeText:false,bindings:defaultBindings()};
 try {settings={...settings,...JSON.parse(localStorage.getItem('dao-settings')||'{}')};}catch{}
@@ -84,26 +84,25 @@ function makePlayer() {
   group.userData.shadow = shadow;
   return group;
 }
-let shadeAssets=null,moteAssets=null;
-function shadeParts(){
-  if(shadeAssets)return shadeAssets;
-  const eyeColor=()=>settings.colorblind?0x00b3ff:0x7a3cff;
-  shadeAssets={geo:{blob:new THREE.IcosahedronGeometry(.72,1),eye:new THREE.IcosahedronGeometry(.09,1),skirt:new THREE.CylinderGeometry(.6,.95,.5,7),outline:new THREE.IcosahedronGeometry(.78,1)},
-    body:mat(0x120a1a,{emissive:0x7a3cff,emissiveIntensity:.18}),stunned:mat(0x3a3450,{emissive:0x7a3cff,emissiveIntensity:.18}),
-    eyes:new THREE.MeshBasicMaterial({color:eyeColor()}),outline:new THREE.MeshBasicMaterial({color:eyeColor(),wireframe:true,transparent:true,opacity:.45}),eyeColor};
-  return shadeAssets;
-}
-function makeShade() {
-  const A=shadeParts(),group = new THREE.Group(); shadesGroup.add(group);
-  const blob=mesh(A.geo.blob,A.body,group,0,.72,0);blob.scale.set(1,1.35,1);
-  mesh(A.geo.eye,A.eyes,group,-.24,.92,.6);mesh(A.geo.eye,A.eyes,group,.24,.92,.6);
-  const skirt=mesh(A.geo.skirt,A.body,group,0,.23,0);skirt.rotation.y=.3;
-  const outline=mesh(A.geo.outline,A.outline,group,0,.72,0);outline.scale.y=1.35;
-  group.userData.blob=blob;group.userData.skirt=skirt;group.userData.kind='shade';return group;
-}
-function moteParts(){
-  if(!moteAssets)moteAssets={core:new THREE.IcosahedronGeometry(.13,1),halo:new THREE.IcosahedronGeometry(.28,1),coreMat:lightMaterial(),haloMat:new THREE.MeshBasicMaterial({color:0xffd27d,transparent:true,opacity:.12,depthWrite:false})};
-  return moteAssets;
+// Bóng Mực and đom đóm are drawn with InstancedMesh (one draw call per part) so 200+ entities stay cheap (Ticket-04 bench).
+const MAX_SHADES=320,MAX_MOTES=200;
+let shadeInst=null,moteInst=null;
+const _base=new THREE.Matrix4(),_out=new THREE.Matrix4(),_q=new THREE.Quaternion(),_e=new THREE.Euler(),_one=new THREE.Vector3(1,1,1),_p=new THREE.Vector3(),_s=new THREE.Vector3(),_c=new THREE.Color();
+const part=(x,y,z,sx=1,sy=1,sz=1,ry=0)=>new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(0,ry,0)),new THREE.Vector3(sx,sy,sz));
+function instanced(geometry,material,max){const m=new THREE.InstancedMesh(geometry,material,max);m.frustumCulled=false;m.count=0;m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);scene.add(m);return m;}
+function makeEntityMeshes(){
+  const eyeColor=settings.colorblind?0x00b3ff:0x7a3cff;
+  const body=mat(0xffffff,{emissive:0x7a3cff,emissiveIntensity:.18});
+  const eyes=new THREE.MeshBasicMaterial({color:eyeColor});
+  const outline=new THREE.MeshBasicMaterial({color:eyeColor,wireframe:true,transparent:true,opacity:.45});
+  const eyeGeo=new THREE.IcosahedronGeometry(.09,1);
+  const defs=[[new THREE.IcosahedronGeometry(.72,1),body,part(0,.72,0,1,1.35,1),true],[eyeGeo,eyes,part(-.24,.92,.6)],[eyeGeo,eyes,part(.24,.92,.6)],
+    [new THREE.CylinderGeometry(.6,.95,.5,7),body,part(0,.23,0,1,1,1,.3),true],[new THREE.IcosahedronGeometry(.78,1),outline,part(0,.72,0,1,1.35,1)]];
+  shadeInst={body,eyes,outline,parts:defs.map(([geo,material,local,tinted])=>{const mesh=instanced(geo,material,MAX_SHADES);if(tinted)mesh.setColorAt(0,_c.setHex(0xffffff));return {mesh,local,tinted:!!tinted};})};
+  // Invisible probe keeps the Phase 3 browser harness (userData.kind/eyes/outline) working.
+  const probe=new THREE.Object3D();probe.visible=false;probe.userData={kind:'shade',eyes,outline,body};scene.add(probe);
+  const haloMat=new THREE.MeshBasicMaterial({color:0xffd27d,transparent:true,opacity:.12,depthWrite:false});
+  moteInst={core:instanced(new THREE.IcosahedronGeometry(.13,1),lightMaterial(),MAX_MOTES),halo:instanced(new THREE.IcosahedronGeometry(.28,1),haloMat,MAX_MOTES),haloLocal:part(0,0,0,1,.8,1)};
 }
 function environment() {
   scene.background = new THREE.Color(0x0e1430); scene.fog = new THREE.FogExp2(0x1b2350, 0.006);
@@ -158,38 +157,30 @@ function environment() {
   for (let i = 0; i < g.lanterns.length; i++) {
     const l = g.lanterns[i]; const m = lantern(scene, l.pos[0], l.pos[2]); lanternMeshes.set(l.id, m);
   }
-  motesGroup = new THREE.Group(); shadesGroup = new THREE.Group(); scene.add(motesGroup, shadesGroup);
+  makeEntityMeshes();
   pulseMesh = mesh(new THREE.RingGeometry(0.94, 1, 80), new THREE.MeshBasicMaterial({ color: 0xffcf80, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }), scene);
   pulseMesh.rotation.x = -Math.PI / 2;
 }
-function removeGroup(group){group.removeFromParent();}
 function disposeGroup(group) {
   group.traverse(m => { if (m.geometry) m.geometry.dispose(); if (m.material) m.material.dispose(); });
   group.removeFromParent();
 }
 function syncEntities() {
-  const active = new Set(g.motes.map(m => m.id));
-  for (const [id, m] of moteMeshes) if (!active.has(id)) { removeGroup(m); moteMeshes.delete(id); }
-  for (const m of g.motes) {
-    if (!moteMeshes.has(m.id)) {
-      const M=moteParts(),group = new THREE.Group(); mesh(M.core, M.coreMat, group);
-      const halo = mesh(M.halo, M.haloMat, group);
-      halo.scale.y = 0.8; motesGroup.add(group); moteMeshes.set(m.id, group);
-    }
-    const object = moteMeshes.get(m.id); const phase = Number(m.id.slice(1)) || 0;
-    object.position.set(m.pos[0], m.pos[1] + 0.65 + Math.sin(visualTime * 2 + phase) * 0.15, m.pos[2]);
+  const motes=g.motes,MI=moteInst,mc=Math.min(motes.length,MAX_MOTES);MI.core.count=MI.halo.count=mc;
+  for(let i=0;i<mc;i++){const m=motes[i],phase=Number(m.id.slice(1))||0;_base.makeTranslation(m.pos[0],m.pos[1]+.65+Math.sin(visualTime*2+phase)*.15,m.pos[2]);MI.core.setMatrixAt(i,_base);MI.halo.setMatrixAt(i,_out.multiplyMatrices(_base,MI.haloLocal));}
+  MI.core.instanceMatrix.needsUpdate=MI.halo.instanceMatrix.needsUpdate=true;
+  const SI=shadeInst,shades=g.shades,sc=Math.min(shades.length,MAX_SHADES),eyeColor=settings.colorblind?0x00b3ff:0x7a3cff;
+  SI.eyes.color.setHex(eyeColor);SI.outline.color.setHex(eyeColor);SI.body.emissive.setHex(eyeColor);
+  for(const P of SI.parts)P.mesh.count=sc;
+  for(let i=0;i<sc;i++){
+    const s=shades[i],stun=s.state==='stunned';
+    _p.set(s.pos[0],s.pos[1]+Math.sin(visualTime*3)*.07,s.pos[2]);
+    _e.set(0,Math.atan2(g.player.pos[0]-s.pos[0],g.player.pos[2]-s.pos[2]),stun?Math.sin(visualTime*9)*.15:0);_q.setFromEuler(_e);
+    const k=s.state==='spawning'?.5:1;_s.set(k,k,k);_base.compose(_p,_q,_s);
+    _c.setHex(stun?0x3a3450:0x120a1a);
+    for(const P of SI.parts){P.mesh.setMatrixAt(i,_out.multiplyMatrices(_base,P.local));if(P.tinted)P.mesh.setColorAt(i,_c);}
   }
-  const ids = new Set(g.shades.map(s => s.id));
-  for (const [id, m] of shadeMeshes) if (!ids.has(id)) { removeGroup(m); shadeMeshes.delete(id); }
-  const SA=shadeParts();SA.eyes.color.setHex(SA.eyeColor());SA.outline.color.setHex(SA.eyeColor());SA.body.emissive.setHex(SA.eyeColor());SA.stunned.emissive.setHex(SA.eyeColor());
-  for (const s of g.shades) {
-    if (!shadeMeshes.has(s.id)) shadeMeshes.set(s.id, makeShade());
-    const m = shadeMeshes.get(s.id); m.position.set(s.pos[0], s.pos[1] + Math.sin(visualTime * 3) * 0.07, s.pos[2]);
-    m.rotation.y = Math.atan2(g.player.pos[0] - s.pos[0], g.player.pos[2] - s.pos[2]);
-    const bodyMat=s.state==='stunned'?SA.stunned:SA.body;m.userData.blob.material=bodyMat;m.userData.skirt.material=bodyMat;
-    m.scale.setScalar(s.state==='spawning'?.5:1);
-    m.rotation.z = s.state === 'stunned' ? Math.sin(visualTime * 9) * 0.15 : 0;
-  }
+  for(const P of SI.parts){P.mesh.instanceMatrix.needsUpdate=true;if(P.tinted&&P.mesh.instanceColor)P.mesh.instanceColor.needsUpdate=true;}
   let lit = 0;
   for (const l of g.lanterns) {
     const m = lanternMeshes.get(l.id); m.group.position.set(l.pos[0], l.pos[1], l.pos[2]);
@@ -248,7 +239,7 @@ function hud() {
   const near = g.lanterns.filter(l=>(!l.lit||l.fuelUnits<tuning.fuel_max*HZ)&&Math.hypot(l.pos[0]-g.player.pos[0],l.pos[2]-g.player.pos[2])<=tuning.interact_radius).sort((a,b)=>Math.hypot(a.pos[0]-g.player.pos[0],a.pos[2]-g.player.pos[2])-Math.hypot(b.pos[0]-g.player.pos[0],b.pos[2]-g.player.pos[2])||a.id.localeCompare(b.id))[0];
   $('prompt').textContent = near ? near.lit?`E — Châm dầu (${Math.floor(near.fuelUnits/HZ)}/${tuning.fuel_max})`:`E — ${near.ever_lit?'Thắp lại':'Nạp ánh sáng'} (${near.deposited}/${lightingCost(g,near)})` : '';
 }
-function rebuild(){if(scene){scene.traverse(o=>{o.geometry?.dispose();if(o.material){for(const m of Array.isArray(o.material)?o.material:[o.material])m.dispose();}});}scene=new THREE.Scene();lanternMeshes.clear();moteMeshes.clear();shadeMeshes.clear();drifterMeshes.clear();charmMeshes.clear();shadeAssets=null;moteAssets=null;environment();playerMesh=makePlayer();}
+function rebuild(){if(scene){scene.traverse(o=>{o.geometry?.dispose();if(o.material){for(const m of Array.isArray(o.material)?o.material:[o.material])m.dispose();}});}scene=new THREE.Scene();lanternMeshes.clear();drifterMeshes.clear();charmMeshes.clear();environment();playerMesh=makePlayer();}
 function start(scenario = {},night=currentNight) {
   currentNight=night;g = createGame(tuning, 42, scenario,night); rebuild();yaw = 0; facing = 0; accumulator = 0; keys.clear(); pulseAge = hitAge = toastAge = 100;lastCountdown=-1;scoreSaved=false;captions.reset();
   mode = 'playing'; document.body.classList.add('playing');
@@ -305,24 +296,28 @@ function startBench(params) {
   document.body.classList.add('bench', 'playing');
   renderer.setPixelRatio(1); renderer.setSize(1280, 720); camera.aspect = 1280 / 720; camera.updateProjectionMatrix();
   currentNight = 1; g = createBenchGame(tuning, seed); rebuild();
-  B = { seed, duration, post: params.get('post'), start: null, last: null, acc: 0, dts: [], measured: 0, epoch: null, done: false };
+  B = { seed, duration, post: params.get('post'), diag: params.has('diag') ? [] : null, start: null, last: null, acc: 0, dts: [], measured: 0, epoch: null, done: false };
   mode = 'bench';
 }
 function benchFrame(now, dt) {
   if (B.done) return;
   if (B.start === null) B.start = now;
+  const t0 = performance.now();
   B.acc += dt; let n = 0; while (B.acc >= 1 / HZ && n++ < 8) { step(g, {}); B.acc -= 1 / HZ; }
+  const t1 = performance.now();
   syncEntities(); playerMesh.position.fromArray(g.player.pos); playerMesh.userData.shadow.position.set(g.player.pos[0], 0.025, g.player.pos[2]);
   const elapsed = (now - B.start) / 1000, cam = benchCamera(elapsed);
+  const t2 = performance.now();
   camera.position.fromArray(cam.position); camera.lookAt(...cam.target); renderer.render(scene, camera);
-  B.epoch ??= Date.now();
+  if (B.diag) B.diag.push([dt, n, t1 - t0, t2 - t1, performance.now() - t2]);
+  if (B.epoch === null) { B.epoch = Date.now(); if (B.post) fetch(new URL('/bench-start', B.post), { method: 'POST' }).catch(() => {}); }
   if (elapsed >= BENCH.warmup_s && B.last !== null) { const d = now - B.last; if (d > 0) { B.dts.push(d); B.measured += d; } }
   B.last = now;
   if (B.measured >= B.duration * 1000) { B.done = true; finishBench(); }
 }
 async function finishBench() {
   const gl = renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info');
-  const report = { dts: B.dts, first_frame_epoch: B.epoch, renderer: `three@${THREE.REVISION} WebGLRenderer (${gl.getParameter(gl.VERSION)}); GPU: ${ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : 'unknown'}`, user_agent: navigator.userAgent, canvas: [canvas.width, canvas.height] };
+  const report = { dts: B.dts, first_frame_epoch: B.epoch, renderer: `three@${THREE.REVISION} WebGLRenderer (${gl.getParameter(gl.VERSION)}); GPU: ${ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : 'unknown'}`, user_agent: navigator.userAgent, canvas: [canvas.width, canvas.height], diag: B.diag };
   window.__benchReport = report; document.title = 'bench-done';
   if (B.post) { try { await fetch(B.post, { method: 'POST', body: JSON.stringify(report) }); } catch (e) { console.error(e); } }
 }

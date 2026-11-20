@@ -30,7 +30,10 @@ export function launch({ url, width = 1280, height = 720, headless = false, app 
       let page;
       for (let i = 0; i < 100 && !page; i++) { page = (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(t => t.type === 'page'); if (!page) await new Promise(r => setTimeout(r, 100)); }
       const ws = new WebSocket(page.webSocketDebuggerUrl); await new Promise((res, rej) => { ws.onopen = res; ws.onerror = rej; });
-      handle.cdp = new Cdp(ws); return handle.cdp;
+      handle.cdp = new Cdp(ws);
+      // Keep the page foreground and un-throttled even when another window has focus (otherwise rAF can stall).
+      await handle.cdp.send('Page.bringToFront').catch(() => {}); await handle.cdp.send('Emulation.setFocusEmulationEnabled', { enabled: true }).catch(() => {});
+      return handle.cdp;
     },
     close() {
       try { handle.cdp?.ws.close(); } catch { /* already closed */ }

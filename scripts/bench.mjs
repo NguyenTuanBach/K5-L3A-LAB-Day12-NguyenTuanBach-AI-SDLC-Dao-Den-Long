@@ -28,23 +28,45 @@ let args, server, browser, sampler;
 try {
   args = parse(process.argv.slice(2));
   if (!existsSync('dist/index.html')) { console.error('dist/ missing: running npm run build'); if (spawnSync(process.execPath, ['scripts/build.mjs'], { stdio: 'inherit' }).status !== 0) throw new Error('build failed'); }
-  const result = await new Promise((resolveResult, reject) => {
-    server = createServer(async (req, res) => {
+  // One attempt = launch the browser and wait for its report. A window that never renders (occluded/throttled by the OS) is detected
+  // by a missing "first frame" ping and retried instead of hanging the run.
+  const attempt = () => new Promise((resolveResult, reject) => {
+    let started = false;
+    const timers = [];
+    const fail = e => { timers.forEach(clearTimeout); reject(e); };
+    server.removeAllListeners('request');
+    server.on('request', async (req, res) => {
+      if (req.method === 'POST' && req.url === '/bench-start') { started = true; res.writeHead(204); res.end(); return; }
       if (req.method === 'POST' && req.url === '/bench-result') {
-        try { const body = JSON.parse(await readBody(req, 64 * 1024 * 1024)); res.writeHead(204); res.end(); resolveResult(body); } catch (e) { res.writeHead(400); res.end(); reject(e); }
+        try { const body = JSON.parse(await readBody(req, 64 * 1024 * 1024)); res.writeHead(204); res.end(); timers.forEach(clearTimeout); resolveResult(body); } catch (e) { res.writeHead(400); res.end(); fail(e); }
         return;
       }
       return serveStatic(resolve('dist'), req, res);
-    }).listen(0, '127.0.0.1', () => {
-      const port = server.address().port;
-      const url = `http://127.0.0.1:${port}/?bench=1&seed=${args.seed}&duration=${args.duration}&post=${encodeURIComponent(`http://127.0.0.1:${port}/bench-result`)}`;
-      browser = launch({ url, headless: args.headless, flags: BENCH_FLAGS, browser: args.browser });
-      browser.proc.on('error', reject);
-      browser.proc.on('exit', code => { if (!browser.finished) reject(new Error(`Browser exited early (code ${code})`)); });
-      sampler = setInterval(() => { const v = browserRssMb(browser.dir); if (v !== null) mem.peak = Math.max(mem.peak ?? 0, v); }, 1500);
-      setTimeout(() => reject(new Error('Benchmark timed out')), (args.duration + 60) * 1000);
     });
+    const port = server.address().port;
+    const base = `http://127.0.0.1:${port}`;
+    const url = `${base}/?bench=1&seed=${args.seed}&duration=${args.duration}&post=${encodeURIComponent(`${base}/bench-result`)}`;
+    browser = launch({ url, headless: args.headless, flags: BENCH_FLAGS, browser: args.browser });
+    browser.finished = false;
+    browser.proc.on('error', fail);
+    browser.proc.on('exit', code => { if (!browser.finished) fail(new Error(`Browser exited early (code ${code})`)); });
+    // Keep the page foreground and un-throttled even when another window has focus.
+    browser.connect().then(async cdp => { await cdp.send('Page.bringToFront'); await cdp.send('Emulation.setFocusEmulationEnabled', { enabled: true }); }).catch(() => {});
+    clearInterval(sampler); mem.peak = null;
+    sampler = setInterval(() => { const v = browserRssMb(browser.dir); if (v !== null) mem.peak = Math.max(mem.peak ?? 0, v); }, 1500);
+    timers.push(setTimeout(() => { if (!started) fail(new Error('Browser never rendered the benchmark scene')); }, 40000));
+    timers.push(setTimeout(() => fail(new Error('Benchmark timed out')), (args.duration + 60) * 1000));
   });
+  server = createServer();
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  let result, lastError;
+  for (let tries = 1; tries <= 3 && !result; tries++) {
+    try { result = await attempt(); } catch (e) {
+      lastError = e; console.error(`Attempt ${tries} failed: ${e.message}`);
+      if (browser) { browser.finished = true; browser.close(); browser = null; }
+    }
+  }
+  if (!result) throw lastError;
   browser.finished = true;
   const stats = benchStats(result.dts);
   const round = (v, d = 1) => Math.round(v * 10 ** d) / 10 ** d;

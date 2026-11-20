@@ -33,7 +33,7 @@
     {
       "name": "reduced-motion-disables-screen-flash",
       "pass": true,
-      "flashOff": 0.4977
+      "flashOff": 0.481367
     },
     {
       "name": "captions-and-indicators",
