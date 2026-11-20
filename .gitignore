@@ -8,3 +8,4 @@ artifacts/
 *.mp4
 !docs/demo/demo.mp4
 data/
+release/
