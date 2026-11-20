@@ -145,3 +145,10 @@ Phase 2 mở rộng mapping: src/core/maps.mjs là nguồn hình học chung cho
 
 Chạy `?labtest=1` mới có window.__lab dùng QA/parity. Bản bình thường không có API inject scenario;
 fixture QA chỉ copy tạm vào dist khi kiểm tra và bị xóa bởi build sạch. Đồ họa không thay state core.
+
+## Phase 4 (v1.0.0, contract 1.3)
+Core vẫn không biết renderer/DOM/đồng hồ. Thêm: `src/core/bench.mjs` (cảnh bench dữ liệu thuần + `benchCamera`), `src/core/metrics.mjs` (thống kê dt), `src/core/leaderboard.mjs` (luật top 10, validate tên, ISO 8601 có múi giờ), cờ `g.bench` trong `step()`.
+`src/headless/soak.mjs`: 10 Đêm trong một tiến trình, input ngẫu nhiên theo seed.
+Web: `keymap.mjs` (phím, thuần), `captions.mjs` (phụ đề + mũi tên mép), `leaderboard-client.mjs` (đĩa qua API, dự phòng localStorage); `?bench=1` chạy cảnh bench trong `main.mjs`.
+Node: `scripts/serve.mjs` (static + `/api/leaderboard` + `--export-leaderboard`), `leaderboard-store.mjs` (ghi nguyên tử), `bench.mjs` + `browser.mjs` (CDP tối thiểu, đo RSS cây tiến trình), `check-phase4*.mjs`, `linux-check-phase4.mjs`.
+Thời gian thực tế chỉ xuất hiện ở bench runner/trang bench và `achieved_at`; không đi vào mô phỏng. Chi tiết: specs/004-dawn-release/plan.md.

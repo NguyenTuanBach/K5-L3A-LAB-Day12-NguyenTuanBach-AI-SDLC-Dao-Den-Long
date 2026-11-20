@@ -21,7 +21,8 @@
         "US-03",
         "US-04",
         "US-05",
-        "FR-006"
+        "FR-006",
+        "TICKET-04"
       ],
       "command": [
         "node",
@@ -30,7 +31,8 @@
         "tests/cli.test.mjs",
         "tests/input.test.mjs",
         "tests/phase2.test.mjs",
-        "tests/phase3.test.mjs"
+        "tests/phase3.test.mjs",
+        "tests/phase4.test.mjs"
       ],
       "timeout_seconds": 120
     },
@@ -51,6 +53,66 @@
       "timeout_seconds": 120
     },
     {
+      "id": "phase4-headless-bench-scene-soak",
+      "requirements": [
+        "T04-§1",
+        "T04-§2",
+        "T04-§6"
+      ],
+      "command": [
+        "node",
+        "scripts/check-phase4.mjs"
+      ],
+      "timeout_seconds": 180
+    },
+    {
+      "id": "phase4-browser-accessibility-leaderboard",
+      "requirements": [
+        "T04-§3",
+        "T04-§4"
+      ],
+      "command": [
+        "node",
+        "scripts/check-phase4-browser.mjs"
+      ],
+      "timeout_seconds": 400
+    },
+    {
+      "id": "phase4-benchmark",
+      "requirements": [
+        "T04-§1"
+      ],
+      "command": [
+        "node",
+        "scripts/bench.mjs",
+        "--seed",
+        "42",
+        "--duration",
+        "30",
+        "--out",
+        "docs/proof/phase-4/bench.json"
+      ],
+      "timeout_seconds": 180
+    },
+    {
+      "id": "phase4-soak",
+      "requirements": [
+        "T04-§2"
+      ],
+      "command": [
+        "node",
+        "--expose-gc",
+        "src/headless/soak.mjs",
+        "--seed",
+        "7",
+        "--nights",
+        "10",
+        "--out",
+        "docs/proof/phase-4/soak.json"
+      ],
+      "timeout_seconds": 180
+    },
+    {
       "id": "linux-clean-build-tests-parity",
       "requirements": [
         "FR-008",
@@ -62,6 +124,18 @@
         "scripts/linux-check.mjs"
       ],
       "timeout_seconds": 600
+    },
+    {
+      "id": "phase4-linux-clean-build-tests-parity",
+      "requirements": [
+        "T04-§5",
+        "T04-§6"
+      ],
+      "command": [
+        "node",
+        "scripts/linux-check-phase4.mjs"
+      ],
+      "timeout_seconds": 900
     }
   ]
 }

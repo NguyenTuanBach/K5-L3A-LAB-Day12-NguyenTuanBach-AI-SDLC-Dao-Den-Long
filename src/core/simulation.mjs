@@ -51,7 +51,7 @@ export function step(g,patch={}){
  g.sim_tick++;if(g.sim_tick===1)event('night_start',{night:g.night});g.time_left_s=Math.max(0,g.startTime-g.sim_tick/HZ);
  // Step 2: aggregate all start-of-tick drainers, then extinguish before interaction.
  for(const l of g.lanterns){
-  if(!l.lit)continue;
+  if(!l.lit||g.bench)continue;
   const draining=g.shades.filter(v=>v.state==='drain'&&v.target_lantern_id===l.id&&dist(v.pos,l.pos)<=2&&l.fuelUnits<t.low_fuel_threshold*HZ);
   l.fuelUnits=Math.max(0,l.fuelUnits-t.fuel_decay_per_s-draining.length*t.drain_per_s);
   for(const shade of draining){shade.drainTicks++;if(shade.drainTicks%HZ===0)event('fuel_drain',{lantern_id:l.id,shade_id:shade.id,fuel:fuelValue(l)});}
@@ -81,7 +81,7 @@ export function step(g,patch={}){
   if(dashing)p.dashLeft--;
   if(p.pos[1]<-10){const lost=p.carried;p.flames=Math.max(0,p.flames-1);p.carried=0;p.respawn=60;p.vel=[0,0,0];p.dashLeft=0;p.launch=null;disabled=true;event('player_hit',{by:'fall',flames:p.flames,dropped:0,lost});}
  }
- if(!disabled){
+ if(!disabled&&!g.bench){
   g.motes=g.motes.filter(m=>{if(m.born<g.sim_tick&&p.carried<capacity(g)&&dist(p.pos,m.pos)<=t.pickup_radius&&Math.abs(p.pos[1]-m.pos[1])<=1.5){p.carried++;event('mote_picked',{carried:p.carried});return false;}return true;});
   for(const c of g.charms)if(c.available&&dist(p.pos,c.pos)<=t.pickup_radius&&Math.abs(p.pos[1]-c.pos[1])<=1.5){c.available=false;c.respawn=2700;p.charm=600;event('charm_picked',{charm_id:c.id,charm_ticks:600});}
   if(edge('interact')&&p.carried){
@@ -127,7 +127,7 @@ export function step(g,patch={}){
  for(const d of g.drifters){if(d.born===g.sim_tick)continue;if(d.state==='flee'){if(d.stateLeft===0){d.state='removed';continue;}const v=direction(p.pos,d.pos);d.pos[0]+=v[0]*7/HZ;d.pos[2]+=v[1]*7/HZ;}
   else{d.state=p.carried>=5&&dist(d.pos,p.pos)<=15?'chase':'idle';const v=d.state==='chase'?direction(d.pos,p.pos):[Math.cos(d.wander),Math.sin(d.wander)];const speed=d.state==='chase'?7:2;d.pos[0]+=v[0]*speed/HZ;d.pos[2]+=v[1]*speed/HZ;}
  }
- if(!disabled){for(const d of [...g.drifters].sort(order))if(d.state==='chase'&&d.born<g.sim_tick&&dist(d.pos,p.pos)<=1.2){const amount=Math.min(3,p.carried);p.carried-=amount;d.stolen=amount;d.state='flee';d.stateLeft=240;event('drifter_steal',{drifter_id:d.id,amount,carried:p.carried});}
+ if(!disabled&&!g.bench){for(const d of [...g.drifters].sort(order))if(d.state==='chase'&&d.born<g.sim_tick&&dist(d.pos,p.pos)<=1.2){const amount=Math.min(3,p.carried);p.carried-=amount;d.stolen=amount;d.state='flee';d.stateLeft=240;event('drifter_steal',{drifter_id:d.id,amount,carried:p.carried});}
   const safe=g.lanterns.some(l=>isSafeLantern(g,l)&&dist(p.pos,l.pos)<=t.safe_radius);
   for(const s of [...g.shades].sort(order))if(!safe&&!s.eject&&p.invuln===0&&p.flames>0&&!['stunned','spawning','recoil','drain'].includes(s.state)&&s.born<g.sim_tick&&dist(p.pos,s.pos)<=t.shade_hit_radius&&Math.abs(p.pos[1]-s.pos[1])<=1.5){p.flames--;p.invuln=90;const amount=Math.floor(p.carried/2);p.carried-=amount;drop(g,amount,p.pos);s.state='recoil';s.stateLeft=60;s.pushDir=direction(p.pos,s.pos);event('player_hit',{by:'shade',flames:p.flames,dropped:amount});break;}
  }
@@ -137,7 +137,8 @@ export function step(g,patch={}){
  if(g.random_shades&&(g.sim_tick===300||(g.sim_tick>300&&(g.sim_tick-300)%g.map.shadeInterval===0))){const count=g.sim_tick===300?2:1;for(let i=0;i<count&&g.shades.length<g.map.maxShades;i++){const legal=spawnPoints();if(!legal.length)break;shade(g,{pos:legal[Math.floor(random(g)*legal.length)]});event('shade_spawned',{id:g.shades.at(-1).id});}}
  if(g.night>1&&g.random_drifters&&g.sim_tick%1200===0&&g.drifters.length<2){const points=g.map.shadePoints;g.drifters.push({id:id(g,g.drifters,'D','nextDrifter'),pos:[...points[Math.floor(random(g)*points.length)]],state:'idle',stateLeft:0,stolen:0,wander:random(g)*Math.PI*2,born:g.sim_tick});}
  let reason;
- if(p.flames===0){g.state='lost';reason='no_flames';}
+ if(g.bench){/* Ticket-04 benchmark scene: no end condition. */}
+ else if(p.flames===0){g.state='lost';reason='no_flames';}
  else if(g.time_left_s<=0){if(g.lanterns.filter(l=>l.lit).length>=Math.ceil(t.win_ratio*g.lanterns.length)){g.state='won';reason='dawn_survived';}else{g.state='lost';reason='dawn';}}
  if(reason){g.reason=reason;if(g.state==='won')g.score+=g.lanterns.filter(l=>l.lit).reduce((sum,l)=>sum+t.score.per_lit_at_dawn+Math.floor(l.fuelUnits/HZ),0)+p.flames*t.score.per_flame_left;event('game_over',{result:g.state,reason});}
  return events;

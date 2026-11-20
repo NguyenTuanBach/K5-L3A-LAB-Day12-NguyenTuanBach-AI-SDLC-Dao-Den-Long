@@ -12,5 +12,8 @@
 - Không có âm thanh trong Phase 1. Không sử dụng thương hiệu hoặc nhân vật game khác.
 - Phase 2: nhạc và hiệu ứng âm thanh được tổng hợp procedural bằng Web Audio trong src/web/audio.mjs, không dùng audio/nhạc bên ngoài. Gió Lạc, Bùa Gió và bản đồ ba Đêm theo Ticket-02 của lab.
 
-AI sử dụng: Codex để đặc tả, lập kế hoạch, viết code, test và tài liệu;
+AI sử dụng: Claude Code (Claude Sonnet 5.5) cho Phase 4 (benchmark, soak, bảng xếp hạng, khả năng tiếp cận, kiểm chứng tự động, tài liệu) và Codex để đặc tả, lập kế hoạch, viết code, test và tài liệu;
 agent runtime_research hỗ trợ nghiên cứu và rà thiết kế kỹ thuật. Nhật ký ở docs/notes/ai-log.md.
+
+- Phase 4: không thêm asset, font, âm thanh hay thư viện mới. Chuẩn bị bản demo dùng ffmpeg (GPL/LGPL, công cụ ngoài, không đóng gói trong repo) để nén video; video do chính tôi quay màn hình.
+- Phase 4: cảnh benchmark, bảng xếp hạng, phụ đề và mũi tên mép màn hình đều là mã tự viết trong dự án.

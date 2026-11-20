@@ -27,3 +27,18 @@ union projection đã có regression. Chặn rìa, hit_drop_ratio0; không event
 Validation từ chối unknown fields và enum/range/type sai; dash boolean nhận nhưng
 Phase 1 không có dash. Terminal scenario đánh giá ở bước đầu, tick0 không phát event.
 Không có giờ bắt đầu lab chính thức trong phiên, nên không tuyên bố tag đúng deadline.
+
+## Phase 4 (Ticket-04 / contract 1.3) — giả định tự chọn, chưa được giảng viên xác nhận
+- A4-01 Phân vị 95 dùng nearest-rank: phần tử thứ ceil(0.95·N) của dt sắp tăng. Ticket không nêu phương pháp nội suy.
+- A4-02 "Đêm thứ i dùng seed 7 + i": i chạy từ 1 đến --nights (Đêm đầu dùng seed 8).
+- A4-03 Hướng input ngẫu nhiên của soak: góc đều trong [0, 2π), mỗi 30 tick; xác suất nhảy/lướt/tỏa sáng/tương tác là mức "giữ phím" mỗi tick (edge được core tự suy ra).
+- A4-04 "Chạy tới khi kết thúc hoặc hết thời lượng chuẩn": chạy đến khi core báo won/lost (core luôn kết thúc ở 240/270/300 s).
+- A4-05 mem_start_mb đo sau 30 Đêm khởi động JIT bỏ đi (chưa gc) để tránh đo trạng thái "chưa biên dịch"; mem_end_mb đo sau gc cuối. 400 Đêm cho đường cong phẳng (không rò rỉ), xem docs/notes/decisions.md.
+- A4-06 Bench trên web: RSS = tổng bộ nhớ mọi tiến trình của cây trình duyệt (có chia sẻ trang nên số lớn hơn RSS thực). load_ms tính từ lúc spawn trình duyệt đến khung hình bench đầu tiên.
+- A4-07 Cảnh bench: Vogel spiral xoay theo seed; Bóng Mực không đặt trong vùng an toàn của L1–L3 (+0,5 m) để không bị đẩy ra ngay tick đầu; camera t=0 tại lúc khung hình bench đầu tiên.
+- A4-08 vsync_off = true khi cờ tắt vsync/giới hạn khung hình được truyền; trình duyệt không cho đọc lại trạng thái này. avg_fps vượt tần số quét màn hình là bằng chứng gián tiếp (máy này 240 FPS).
+- A4-09 Tên bảng xếp hạng chỉ ASCII [A-Za-z0-9_] đúng ticket; chưa hỗ trợ tiếng Việt có dấu (điểm cộng, không bắt buộc).
+- A4-10 score trên bảng = tổng điểm các Đêm đã thắng trong lượt chiến dịch hiện tại (không cộng điểm Đêm vừa thua); mỗi kết quả (thua hoặc thắng Đêm 3) lưu tối đa một lần.
+- A4-11 achieved_at do máy chủ gắn (giờ địa phương có độ lệch múi giờ) để người chơi không tự khai.
+- A4-12 Game không có rung camera nên "tắt rung camera" không có tác dụng riêng; "giảm chuyển động" tắt chớp màn hình, nhấp nháy đèn/đếm ngược và hoạt ảnh CSS, và mặc định theo `prefers-reduced-motion`.
+- A4-13 Bản chạy trong Release là thư mục web tĩnh (`dist`) + hướng dẫn Docker; bảng xếp hạng trên host tĩnh dùng localStorage, trên `npm start` dùng đĩa (data/leaderboard.json, đặt thư mục bằng DAO_DATA_DIR).

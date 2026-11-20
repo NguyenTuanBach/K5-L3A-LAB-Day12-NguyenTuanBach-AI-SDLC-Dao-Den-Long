@@ -72,3 +72,14 @@ Normal FPS trials in background tabs throttled; final visible side-pane normalga
 Reviewer independently ran53tests and checked fuel/drain/capacity/scoring/terminal/UI, no mandatory defect found in scope.
 ADR003,CHANGELOG and requirements table record breakingchanges and scenario/cadence interpretations.
 Token/cost not measured; no hidden-test or full-human-playthrough claim.
+
+## Phase4 2026-11-20 (Claude Code, Sonnet 5.5)
+Ticket-04 được dán từ lab board; lưu nguyên văn rồi mới code. Làm: bench/soak/leaderboard/đổi phím/phụ đề/chữ ≥18px, 14 test mới (67/67), kiểm browser tự động qua CDP, Docker Linux.
+Lỗi AI/quy trình đã gặp và cách phát hiện:
+- Heredoc nhiều dòng có dấu nháy/backtick làm hỏng lệnh shell hai lần (lỗi "unexpected EOF"); chuyển sang tạo file bằng công cụ Write.
+- Soak: mem_end/mem_start vượt 1,2 (1,26) ở lần chạy đầu và có lần trượt sau khi chỉnh; phát hiện nhờ chạy lặp 8–20 lần, không tin một lần PASS.
+- Cảnh bench ban đầu hiện cả panel UI "Đêm 1" đè lên cảnh (thấy khi chụp ảnh); thêm CSS ẩn UI trong body.bench.
+- Test trình duyệt đầu tiên giả định `__lab.advance` bắt được sự kiện kết thúc; thực tế hai bước resume nuốt sự kiện nên kết quả không hiện; sửa số tick của kịch bản, không sửa expected.
+- Điểm kỳ vọng ban đầu 600 sai; tính tay 3×(50+99)+3×50 = 597 (fuel đã hao 6 tick) rồi mới sửa assert (kỳ vọng suy từ luật, không lấy từ output).
+- Verify Docker lỗi do chưa có engine đã ghi đè docs/proof/phase-3/linux-build.log; log được tạo lại khi chạy thành công. Đổi tên người nộp bằng sed cũng sửa chữ trong đường dẫn lịch sử của proof Phase 1–3 (ghi chú ở STATUS).
+Token/chi phí: chưa đo (không có số liệu từ nhà cung cấp trong phiên). Cách tiết kiệm: không thêm thư viện, đọc trước rồi mới sửa, script chụp ảnh/kiểm tra thay cho thử tay lặp lại.

@@ -4,7 +4,7 @@
     "node": "v24.14.0",
     "platform": "win32"
   },
-  "performance_seconds": 0.09870920000000001,
+  "performance_seconds": 0.090553,
   "regression": [
     {
       "name": "dash",

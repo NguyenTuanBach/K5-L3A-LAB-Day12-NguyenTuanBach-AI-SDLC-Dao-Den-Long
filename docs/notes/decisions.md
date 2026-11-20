@@ -28,3 +28,11 @@ Pause tick increases, sim_tick freezes; resume immediately simulates after clear
 Night3 unspecified start/respawn chosen (0,0,-30) to avoid spawning buried below the central terrace/tower.
 night_start on first nonpaused tick; boolean invuln, random ttl_s=0; extended scenario defaults in feature contract.
 Audio synthesized locally and does not touch gameplay RNG. Campaign totals won nights only.
+
+## Phase 4 decisions
+- D4-01 Cờ `g.bench` trong core thay vì sửa scenario schema: validateScenario không đổi (schema headless giữ nguyên); chỉ bench mới bật cờ.
+- D4-02 Không thêm Playwright/Puppeteer: client DevTools tối thiểu (scripts/browser.mjs) dùng WebSocket có sẵn của Node 22 để vừa chạy bench vừa kiểm browser.
+- D4-03 Soak memory: đo 10/100/400 Đêm cho mem_end 58/79/86 MB (đường cong phẳng dần = JIT và heap, không phải rò rỉ). Thêm khởi động JIT trước khi đo mem_start; chạy 20 lần thấy tỉ lệ 1,09–1,12 so ngưỡng 1,2 (trước khi thêm khởi động: 1,0–1,26, có lần trượt).
+- D4-04 Bảng xếp hạng ở máy chủ Node (đĩa) + dự phòng localStorage, vì ticket đòi "lưu trên đĩa" và lệnh xuất không thể đọc localStorage.
+- D4-05 Dùng chung hình học/vật liệu Bóng Mực và đom đóm (200 con × 5 mesh) để giảm draw/allocation; không đổi hình dạng.
+- D4-06 Giữ nguyên proof/tag phase-1..3; linux-check cũ (phase-3) vẫn chạy làm hồi quy, Linux Phase 4 ghi vào docs/proof/phase-4.

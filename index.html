@@ -18,7 +18,7 @@
       <p class="story">Sương đen phủ xuống biển mây. Theo chân Mây qua ba hòn đảo, châm dầu cho những ngọn đèn và giữ đảo sáng đến bình minh.</p>
       <div class="mission"><span>01</span><p>Gom đom đóm. Giữ đèn sáng.<br><strong>Đèn có thể cạn dầu. Bóng Mực đang đợi.</strong></p></div>
       <button id="start" class="primary">Bắt đầu đêm nay <span>↗</span></button>
-      <button id="menu-settings" class="secondary">Cài đặt</button>
+      <div class="menu-row"><button id="menu-settings" class="secondary">Cài đặt</button><button id="menu-leaderboard" class="secondary">Bảng xếp hạng</button></div>
       <p class="intro-foot">3 ĐÊM <i>·</i> 18 NGỌN ĐÈN <i>·</i> MỘT HÀNH TRÌNH</p>
     </section>
     <section id="hud" hidden aria-label="Thông tin lượt chơi">
@@ -27,7 +27,7 @@
       <div class="progress" id="lantern-progress" aria-label="Tiến độ năm đèn"></div>
       <div class="score"><small>ĐIỂM ÁNH SÁNG</small><strong id="score">0</strong></div>
       <div id="prompt" class="prompt" role="status"></div>
-      <div id="toast" class="toast" role="status"></div>
+      <div id="toast" class="toast" role="status"></div><div id="captions" class="captions" aria-live="polite"></div><div id="edge-arrows" aria-hidden="true"></div>
       <button id="pause" class="pause-button" aria-label="Tạm dừng">Ⅱ</button>
       <div id="mote-slots" aria-label="Túi đom đóm 10 ô"></div>
       <div class="cooldowns"><span>SHIFT · LƯỚT <b id="dash-cd"></b></span><span>Q · TỎA SÁNG <b id="pulse-cd"></b></span></div>
@@ -35,12 +35,23 @@
     </section>
     <section id="night-intro" class="panel result" hidden><p class="eyebrow">LỜI ÔNG ĐĂNG</p><h2 id="intro-name"></h2><p id="intro-story"></p><button id="enter-night" class="primary">Bước vào đêm <span>→</span></button></section>
     <section id="paused" class="panel result" hidden><p class="eyebrow">ĐÊM VẪN CÒN Ở ĐÂY</p><h2>Một chút<br><em>nghỉ chân.</em></h2><p>Ánh sáng sẽ đợi bạn.</p><button id="resume" class="primary">Tiếp tục <span>→</span></button><button id="retry-night" class="secondary">Chơi lại Đêm</button><button id="pause-settings" class="secondary">Cài đặt</button><button id="to-menu" class="secondary">Về menu</button></section>
-    <section id="settings" class="panel result" hidden><p class="eyebrow">THEO CÁCH CỦA BẠN</p><h2>Cài <em>đặt.</em></h2><label>Âm lượng <input id="volume" type="range" min="0" max="1" step="0.05"></label><label>Độ nhạy chuột <input id="sensitivity" type="range" min="0.05" max="1" step="0.05"></label><label class="palette-setting">Bảng màu dễ phân biệt <input id="colorblind" type="checkbox"></label><button id="close-settings" class="primary">Xong <span>✓</span></button></section>
-    <section id="result" class="panel result" hidden aria-labelledby="result-title"><p class="eyebrow" id="result-kicker"></p><h2 id="result-title"></h2><p id="result-story"></p><div class="result-score"><small>ĐIỂM ÁNH SÁNG</small><strong id="final-score"></strong></div><button id="next-night" class="primary" hidden>Đêm kế tiếp <span>→</span></button><button id="restart" class="secondary">Chơi lại Đêm này</button></section>
+    <section id="settings" class="panel result wide" hidden aria-labelledby="settings-title"><p class="eyebrow">THEO CÁCH CỦA BẠN</p><h2 id="settings-title">Cài <em>đặt.</em></h2>
+      <div class="settings-grid">
+        <label>Âm lượng <input id="volume" type="range" min="0" max="1" step="0.05"></label>
+        <label>Độ nhạy chuột <input id="sensitivity" type="range" min="0.05" max="1" step="0.05"></label>
+        <label class="palette-setting">Bảng màu dễ phân biệt <input id="colorblind" type="checkbox"></label>
+        <label class="palette-setting">Phụ đề và chỉ báo hình ảnh <input id="captions" type="checkbox"></label>
+        <label class="palette-setting">Giảm chuyển động (tắt rung, chớp màn hình) <input id="reduced-motion" type="checkbox"></label>
+        <label class="palette-setting">Chữ lớn (×1,25) <input id="large-text" type="checkbox"></label>
+      </div>
+      <h3>Đổi phím</h3><div id="keybinds" class="keybinds"></div><p id="keybind-msg" role="alert" class="form-msg"></p>
+      <div class="actions"><button id="reset-keys" class="secondary">Khôi phục mặc định</button><button id="close-settings" class="primary">Xong <span>✓</span></button></div></section>
+    <section id="leaderboard" class="panel result wide" hidden aria-labelledby="lb-title"><p class="eyebrow">NHỮNG NGƯỜI GIỮ LỬA</p><h2 id="lb-title">Bảng <em>xếp hạng.</em></h2><ol id="lb-list" class="lb-list"></ol><p id="lb-empty" hidden>Chưa có ai trên bảng. Hãy là người đầu tiên.</p><button id="close-leaderboard" class="primary">Về menu <span>←</span></button></section>
+    <section id="result" class="panel result" hidden aria-labelledby="result-title"><p class="eyebrow" id="result-kicker"></p><h2 id="result-title"></h2><p id="result-story"></p><div class="result-score"><small>ĐIỂM ÁNH SÁNG</small><strong id="final-score"></strong></div><form id="name-form" class="name-form" hidden autocomplete="off"><label for="player-name">Tên của bạn (3-12 ký tự: A-Z, a-z, 0-9, _)</label><div class="name-row"><input id="player-name" name="player-name" minlength="3" maxlength="12" spellcheck="false" aria-describedby="name-msg"><button id="save-score" class="primary" type="submit">Lưu điểm</button></div><p id="name-msg" role="alert" class="form-msg"></p></form><button id="next-night" class="primary" hidden>Đêm kế tiếp <span>→</span></button><button id="restart" class="secondary">Chơi lại Đêm này</button></section>
     <section id="error" class="panel result" hidden><h2>Chưa mở được đảo</h2><p id="error-text"></p><button onclick="location.reload()" class="primary">Thử lại</button></section>
   </main>
   <div id="wind-leaves" hidden aria-hidden="true">❧　　❧　　　　❧　　❧　　　❧</div>
-  <footer class="controls"><span><kbd>W A S D</kbd> Di chuyển</span><span><kbd>SPACE</kbd> Nhảy</span><span><kbd>SHIFT</kbd> Lướt</span><span><kbd>E</kbd> Nạp đèn</span><span><kbd>Q</kbd> Tỏa sáng <b>−3</b></span><span class="camera-help">KÉO CHUỘT XOAY · ESC/P TẠM DỪNG</span></footer>
+  <footer class="controls" id="controls"></footer>
   <script type="module" src="/src/web/main.mjs"></script>
 </body>
 </html>

@@ -1,9 +1,18 @@
-# Đảo Đèn Lồng — Phase 3 · Đèn cạn dầu
+# Đảo Đèn Lồng — v1.0.0 (Phase 4 · Bình minh)
+
+**Video demo (< 5 phút):** [docs/demo/demo.mp4](docs/demo/demo.mp4)
 
 Game 3D góc nhìn thứ ba: dẫn Mây qua Đảo Bến, Đảo Cau và Đảo Chuông, thắp 18 ngọn đèn,
 tránh Bóng Mực và Gió Lạc. Cảnh/âm thanh procedural; bản web và CLI dùng chung core 60 Hz.
 
-[Báo cáo Phase 3](docs/proof/phase-3/report.md) · [Đặc tả](specs/003-lantern-fuel/spec.md) · [Verify](docs/VERIFICATION.md) · [Breaking changes](CHANGELOG.md)
+![Màn chơi: HUD, phụ đề và đèn cạn dầu](docs/proof/phase-4/screenshots/normal-hud.png)
+
+[Báo cáo Phase 4](docs/proof/phase-4/report.md) · [Đặc tả](specs/004-dawn-release/spec.md) · [Verify](docs/VERIFICATION.md) · [Changelog 4 phase](CHANGELOG.md) · [Retro](docs/notes/retro.md)
+
+## Yêu cầu hệ thống
+
+Node.js >= 22 và npm; browser desktop có WebGL2 (Chrome, Edge, Firefox). Bench cần Chrome/Edge/Chromium cài sẵn
+(hoặc đặt `DAO_BROWSER` tới file thực thi). Verify đầy đủ cần Python >= 3.10 và Docker. Đã thử: Windows 11 (Node 24), Linux bằng Docker (Node 22). Chưa thử trên macOS.
 
 ## Chạy game
 
@@ -15,7 +24,7 @@ npm run build
 npm start
 ```
 
-Mở **http://localhost:4173** trong browser desktop có WebGL2. Bản build dist/
+Mở **http://localhost:4173** trong browser desktop có WebGL2. Đặt cổng bằng biến `PORT`. Bản build dist/
 không cần mạng/CDN sau cài đặt; có thể phục vụ bằng static server bất kỳ.
 Windows đã thử Node 22.17.0; Linux đã thử bằng Docker. Nếu môi trường doanh nghiệp
 có CA riêng, dùng cấu hình CA hệ thống phù hợp, không tắt kiểm tra TLS.
@@ -24,7 +33,7 @@ có CA riêng, dùng cấu hình CA hệ thống phù hợp, không tắt kiểm
 
 | Điều khiển | Hành động |
 |---|---|
-| WASD hoặc mũi tên | Di chuyển theo camera |
+| WASD hoặc mũi tên | Di chuyển theo camera (đổi phím trong Cài đặt) |
 | Kéo chuột trên cảnh | Xoay camera |
 | Space | Nhảy, cần nhả để nhảy tiếp |
 | E | Nạp/châm dầu đèn gần trong 2 m; lần đầu cần 10, thắp lại cần 5 |
@@ -55,8 +64,8 @@ Nguồn cấu hình duy nhất: [game.contract.json](game.contract.json).
 ## Test và headless
 
 ```sh
-npm test
-npm run verify
+npm test              # 67 test (Phase 1-4)
+npm run verify        # kịch bản headless Phase 3 (hồi quy)
 node src/headless/cli.mjs --seed 42 --night 1 --ticks 600 --out artifacts/run.jsonl
 node src/headless/cli.mjs --seed 42 --night 2 --scenario tests/scenarios/phase2/pad.json --ticks 90 --snapshot-every 1 --out artifacts/pad.jsonl
 ```
@@ -77,15 +86,31 @@ python scripts/verify.py --config verification/checks.json
 Runner trả nonzero nếu test/build/scenario/Linux thất bại. Report có raw log và
 trạng thái; không thay thế việc review ảnh/camera/HUD. Xem [ma trận](specs/003-lantern-fuel/verification.md).
 
+## Benchmark, soak, bảng xếp hạng, tiếp cận (Phase 4)
+
+```sh
+npm run build
+node scripts/bench.mjs --seed 42 --duration 30 --out bench.json
+node --expose-gc src/headless/soak.mjs --seed 7 --nights 10 --out soak.json
+npm start -- --export-leaderboard out.json
+```
+
+- **Bench** mở cửa sổ Chrome/Edge 1280×720 (cờ `--disable-gpu-vsync --disable-frame-rate-limit`, vsync tắt), cảnh chuẩn 200 Bóng Mực + 100 đom đóm, 3 s khởi động rồi đo `--duration` giây, thoát mã 0. Thêm `--headless` để chạy không cửa sổ (GPU phần mềm, chậm). Trình duyệt không cho đọc lại trạng thái vsync nên `vsync_off` ghi theo cờ đã truyền. `peak_mem_mb` là tổng bộ nhớ cả cây tiến trình trình duyệt. Kết quả máy dev: [docs/proof/phase-4/bench.json](docs/proof/phase-4/bench.json) (238 FPS TB, p1 low 42, load 1,1 s) — chỉ để tham khảo, máy chấm có thể khác.
+- **Soak** chạy 10 Đêm liên tiếp trong một tiến trình, thoát 0 khi crashes = 0 và `mem_end_mb` ≤ 1,2 × `mem_start_mb`. Kết quả: [docs/proof/phase-4/soak.json](docs/proof/phase-4/soak.json). `mem_start_mb` đo sau một lượt khởi động JIT (xem docs/notes/assumptions.md A4-05).
+- **Bảng xếp hạng**: sau Bình Minh hoặc khi thua, nhập tên 3–12 ký tự `A-Z a-z 0-9 _`. Top 10 lưu ở `data/leaderboard.json` (đổi thư mục bằng `DAO_DATA_DIR`); mở từ menu chính. Khi chạy bằng host tĩnh (không có `npm start`) game dùng localStorage.
+- **Tiếp cận** (Cài đặt): đổi phím có cảnh báo trùng và “Khôi phục mặc định”; phụ đề + mũi tên mép màn hình; giảm chuyển động (theo `prefers-reduced-motion` mặc định); chữ >= 18 px, chữ lớn ×1,25.
+
+Kiểm tra trình duyệt tự động (cần `npm run build` và Chrome/Edge): `node scripts/check-phase4-browser.mjs` — kiểm cỡ chữ ở mọi màn hình, đổi phím, phụ đề, giảm chuyển động, bảng xếp hạng qua UI + máy chủ + xuất.
+
 ## Docker Linux
 
 ```sh
-docker build -t dao-den-long:phase-3 .
-docker run --rm -p 4173:4173 dao-den-long:phase-3
+docker build -t dao-den-long:v1.0.0 .
+docker run --rm -p 4173:4173 dao-den-long:v1.0.0
 ```
 
-CLI: `docker run --rm -v "${PWD}/artifacts:/out" dao-den-long:phase-3 node src/headless/cli.mjs --seed 42 --night 2 --ticks 600 --out /out/run.jsonl`.
-Tạo thư mục artifacts trước khi bind mount nếu Docker yêu cầu. Base image pin digest trong Dockerfile.
+CLI: `docker run --rm -v "${PWD}/artifacts:/out" dao-den-long:v1.0.0 node src/headless/cli.mjs --seed 42 --night 2 --ticks 600 --out /out/run.jsonl`.
+Soak trong container: `docker run --rm dao-den-long:v1.0.0 node --expose-gc src/headless/soak.mjs --seed 7 --nights 10 --out /tmp/soak.json`. Bảng xếp hạng nằm trong container (mount `-v dao-data:/game/data` để giữ). Bench cần trình duyệt nên chạy trên máy có Chrome/Edge. Base image pin digest trong Dockerfile.
 
 ## Sáng tạo của tôi
 
@@ -98,8 +123,7 @@ thực thể vào output headless. [Ảnh bắt đầu](docs/proof/phase-1/intro
 
 [AGENTS](AGENTS.md), [ARCHITECTURE](ARCHITECTURE.md), [constitution](.specify/memory/constitution.md),
 [Spec Kit](docs/SPECKIT.md), [STATUS](docs/STATUS.md), [CREDITS](CREDITS.md), [LICENSE](LICENSE).
-Phase 2 có âm thanh và lưu cài đặt; chưa lưu tiến độ chiến dịch hoặc hỗ trợ touch/mobile.
-Video demo và Release v1.0.0 thuộc bàn giao cuối Phase 4.
+Phase 4 thêm lưu bảng xếp hạng và cài đặt; chưa lưu tiến độ chiến dịch, chưa hỗ trợ touch/mobile hay tên tiếng Việt có dấu.
 Số liệu/bản đồ theo Ticket-02; các điểm chưa đặc tả được ghi rõ trong spec/assumptions.
 
 <details>
