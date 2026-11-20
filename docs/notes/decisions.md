@@ -36,3 +36,5 @@ Audio synthesized locally and does not touch gameplay RNG. Campaign totals won n
 - D4-04 Bảng xếp hạng ở máy chủ Node (đĩa) + dự phòng localStorage, vì ticket đòi "lưu trên đĩa" và lệnh xuất không thể đọc localStorage.
 - D4-05 Dùng chung hình học/vật liệu Bóng Mực và đom đóm (200 con × 5 mesh) để giảm draw/allocation; không đổi hình dạng.
 - D4-06 Giữ nguyên proof/tag phase-1..3; linux-check cũ (phase-3) vẫn chạy làm hồi quy, Linux Phase 4 ghi vào docs/proof/phase-4.
+- D4-07 Tối ưu bench: lần đo đầu trên máy dev có p1_low 23–43 FPS (sát/dưới ngưỡng 30). Đo từng khung cho thấy khung chậm (22–36 ms) không do JS (sim < 1 ms, render JS 3–8 ms) mà do GPU/driver với ~1500 draw call. Vẽ Bóng Mực (5 phần) và đom đóm bằng InstancedMesh → p1_low ~100. Hình dạng giữ nguyên; thêm probe ẩn để harness Phase 3 vẫn đọc được userData.
+- D4-08 Bench runner: cửa sổ không render (bị hệ điều hành ẩn/throttle) từng làm bench treo; thêm ping "khung đầu tiên", thử lại tối đa 3 lần và ép trang ở foreground bằng CDP.

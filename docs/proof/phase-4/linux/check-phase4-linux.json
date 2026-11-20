@@ -15,9 +15,9 @@
       "lost",
       "lost"
     ],
-    "mem_start_mb": 80.3,
-    "mem_end_mb": 79.4,
-    "duration_s": 1.701
+    "mem_start_mb": 79.8,
+    "mem_end_mb": 78.9,
+    "duration_s": 1.732
   },
   "cli_sha256": "e04adf090268255153d3db638a85e833117536b55d36ffeb9cab3327b06de9c9"
 }

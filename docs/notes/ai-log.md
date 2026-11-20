@@ -83,3 +83,4 @@ Lỗi AI/quy trình đã gặp và cách phát hiện:
 - Điểm kỳ vọng ban đầu 600 sai; tính tay 3×(50+99)+3×50 = 597 (fuel đã hao 6 tick) rồi mới sửa assert (kỳ vọng suy từ luật, không lấy từ output).
 - Verify Docker lỗi do chưa có engine đã ghi đè docs/proof/phase-3/linux-build.log; log được tạo lại khi chạy thành công. Đổi tên người nộp bằng sed cũng sửa chữ trong đường dẫn lịch sử của proof Phase 1–3 (ghi chú ở STATUS).
 Token/chi phí: chưa đo (không có số liệu từ nhà cung cấp trong phiên). Cách tiết kiệm: không thêm thư viện, đọc trước rồi mới sửa, script chụp ảnh/kiểm tra thay cho thử tay lặp lại.
+- Phase4 tối ưu (sau tag đầu): p1_low 23,2 ở một lần đo của người dùng (đang quay màn hình) làm lộ biên an toàn mỏng. Đo từng khung thay vì đoán; bằng chứng chỉ ra GPU/draw call, nên dùng InstancedMesh. Lần thử đầu bench treo (cửa sổ bị throttle) → thêm thử lại và ép foreground. Chạy lại toàn bộ verify 9/9.

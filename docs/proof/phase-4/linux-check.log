@@ -1,1 +1,1 @@
-PASS bench scene deterministic (200 shades/100 motes), soak 10 nights crashes=0 mem 80.3->79.4 MB, CLI bytes stable
+PASS bench scene deterministic (200 shades/100 motes), soak 10 nights crashes=0 mem 79.8->78.9 MB, CLI bytes stable

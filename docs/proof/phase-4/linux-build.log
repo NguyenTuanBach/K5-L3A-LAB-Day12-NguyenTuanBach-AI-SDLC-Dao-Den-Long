@@ -19,25 +19,25 @@
 #5 transferring context: 5.02kB done
 #5 DONE 0.0s
 
-#6 [7/9] COPY tests ./tests
+#6 [2/9] WORKDIR /game
 #6 CACHED
 
-#7 [4/9] RUN npm ci --ignore-scripts
+#7 [3/9] COPY package.json package-lock.json ./
 #7 CACHED
 
-#8 [3/9] COPY package.json package-lock.json ./
+#8 [4/9] RUN npm ci --ignore-scripts
 #8 CACHED
 
 #9 [5/9] COPY src ./src
 #9 CACHED
 
-#10 [8/9] COPY index.html game.contract.json ./
+#10 [6/9] COPY scripts ./scripts
 #10 CACHED
 
-#11 [6/9] COPY scripts ./scripts
+#11 [7/9] COPY tests ./tests
 #11 CACHED
 
-#12 [2/9] WORKDIR /game
+#12 [8/9] COPY index.html game.contract.json ./
 #12 CACHED
 
 #13 [9/9] RUN npm test && npm run build
@@ -45,11 +45,11 @@
 
 #14 exporting to image
 #14 exporting layers done
-#14 exporting manifest sha256:ac309493aa6b7b0a0df62233e250a5ccffc788f6850dd4ca36939fa7d0735ece done
-#14 exporting config sha256:173173cfbb31d7d2248582fcfa51f1a7b9a00057cb7fb880da66546f03a7889d done
-#14 exporting attestation manifest sha256:87797eb5f9c76a4587fb3e9f9fbac8d6e6a0c200b19de0520dc5665c2565eff2 0.0s done
-#14 exporting manifest list sha256:688bfddc74b2cfe7dee6589717c27dd87444935f83266fb654ed6c7f92847e12
-#14 exporting manifest list sha256:688bfddc74b2cfe7dee6589717c27dd87444935f83266fb654ed6c7f92847e12 done
+#14 exporting manifest sha256:39e7c4932586e72ea6c7d04de5794dbfb456cd4a5d766cd7161c7c104e7e7473 done
+#14 exporting config sha256:b10afaae4514971c44b55015f00faf9233204dce9381005c19b780611a363814 done
+#14 exporting attestation manifest sha256:e42abdab623a1e3c25b7810f09245987bc7c2a948462989980f8853f4dfb3f82 0.0s done
+#14 exporting manifest list sha256:61a9a8777e979344d7380444ea940ca2cdc55173544e29718c67d8424304ba78
+#14 exporting manifest list sha256:61a9a8777e979344d7380444ea940ca2cdc55173544e29718c67d8424304ba78 0.0s done
 #14 naming to docker.io/library/dao-den-long:phase-4 done
 #14 unpacking to docker.io/library/dao-den-long:phase-4 done
 #14 DONE 0.1s
